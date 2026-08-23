@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberDesk - O'quv Tizimi</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="theme-cyan">
 
     <!-- LOGIN EKRANI -->
@@ -15,19 +17,21 @@
             <p class="subtitle">Tizimga kirish uchun parolni kiriting</p>
             <form id="login-form">
                 <div class="password-wrapper" style="position: relative; margin-bottom: 10px;">
-                    <input type="password" id="login-password" placeholder="Parolni kiriting..." required style="width:100%; padding-right: 40px;">
-                    <span onclick="togglePasswordVisibility('login-password', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color);">👁️</span>
+                    <input type="password" id="login-password" placeholder="Parolni kiriting..." required
+                        style="width:100%; padding-right: 40px;">
+                    <span onclick="togglePasswordVisibility('login-password', this)"
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color);">👁️</span>
                 </div>
                 <button type="submit" class="cyber-btn primary-btn" style="width: 100%;">KIRISH</button>
             </form>
             <p id="login-error" class="login-error"></p>
-            <div class="login-hints">            </div>
+            <div class="login-hints"> </div>
         </div>
     </div>
 
     <!-- ASOSIY ILOVA -->
     <div id="app-container" class="app-container" style="display: none;">
-        
+
         <!-- MOBIL HEADER (Hamburger va Logo bir qatorda) -->
         <header class="mobile-header" id="mobile-header">
             <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">
@@ -47,7 +51,7 @@
                 <h2>CYBER<span>DESK</span></h2>
                 <button class="close-sidebar-btn" onclick="toggleSidebar()">&times;</button>
             </div>
-            
+
             <div class="nav-menu">
                 <p class="menu-label">NAVIGATSIYA</p>
                 <button class="nav-btn active" id="btn-dashboard">📊 Bosh sahifa</button>
@@ -73,17 +77,19 @@
                     <p class="name" id="profile-name">Foydalanuvchi</p>
                     <p class="role" id="profile-role">Rol</p>
                 </div>
-                <button onclick="event.stopPropagation(); logout()" class="cyber-btn danger-btn" style="padding: 4px 6px; font-size: 8px;">Chiqish</button>
+                <button onclick="event.stopPropagation(); logout()" class="cyber-btn danger-btn"
+                    style="padding: 4px 6px; font-size: 8px;">Chiqish</button>
             </div>
         </aside>
 
         <!-- O'NG ASOSIY QISM -->
         <main class="main-content">
-            
+
             <!-- BOSH SAHIFA -->
             <section id="view-dashboard" class="view-section active">
                 <div class="gradient-bg">
-                    <h1 id="welcome-title" style="color: var(--accent-color); margin-bottom: 15px;">[ TIZIMGA XUSH KELIBSIZ ]</h1>
+                    <h1 id="welcome-title" style="color: var(--accent-color); margin-bottom: 15px;">[ TIZIMGA XUSH
+                        KELIBSIZ ]</h1>
                     <div class="stats-container">
                         <div class="stat-box">
                             <p style="font-size: 12px; color: #888;">Umumiy Coinlar</p>
@@ -118,7 +124,8 @@
                 <div class="panel">
                     <h2>DO'KON</h2>
                     <p class="subtitle">Yig'ilgan coinlarga sovg'alar xarid qilish</p>
-                    <p style="margin-bottom: 20px;">Sizning balansingiz: <span id="market-balance" class="highlight-text">0</span> 💰</p>
+                    <p style="margin-bottom: 20px;">Sizning balansingiz: <span id="market-balance"
+                            class="highlight-text">0</span> 💰</p>
                     <div id="market-list" class="market-grid"></div>
                 </div>
             </section>
@@ -129,7 +136,8 @@
                     <h2>AMALLAR TARIXI</h2>
                     <p class="subtitle">Bajarilgan darslar va xaridlar tarixi</p>
                     <ul id="history-list" class="history-list"></ul>
-                    <button id="clear-history-btn" class="cyber-btn danger-btn" style="margin-top: 20px;">Tarixni tozalash</button>
+                    <button id="clear-history-btn" class="cyber-btn danger-btn" style="margin-top: 20px;">Tarixni
+                        tozalash</button>
                 </div>
             </section>
 
@@ -143,7 +151,7 @@
                 <h2>PROFIL SOZLAMALARI</h2>
                 <button onclick="closeProfileModal()" class="close-btn">&times;</button>
             </div>
-            
+
             <div class="modal-body">
                 <div class="profile-preview-area">
                     <div class="avatar-large" id="modal-avatar-preview">U</div>
@@ -177,17 +185,37 @@
                 <div class="form-group">
                     <label>Yangi parol (agar o'zgartirmoqchi bo'lsangiz):</label>
                     <div class="password-wrapper" style="position: relative;">
-                        <input type="password" id="new-password-input" placeholder="Yangi parol (min 4 ta)..." style="width:100%; padding-right: 40px;">
-                        <span onclick="togglePasswordVisibility('new-password-input', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color);">👁️</span>
+                        <input type="password" id="new-password-input" placeholder="Yangi parol (min 4 ta)..."
+                            style="width:100%; padding-right: 40px;">
+                        <span onclick="togglePasswordVisibility('new-password-input', this)"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color);">👁️</span>
                     </div>
                 </div>
 
-                <button onclick="saveAllProfileChanges()" class="cyber-btn primary-btn" style="width: 100%; margin-top: 10px;">PROFILNI YANGILASH</button>
+                <button onclick="saveAllProfileChanges()" class="cyber-btn primary-btn"
+                    style="width: 100%; margin-top: 10px;">PROFILNI YANGILASH</button>
             </div>
         </div>
     </div>
 
     <div id="toast-container"></div>
     <script src="app.js"></script>
+    <!-- ZAMONAVIY TASDIQLASH MODALI -->
+    <div id="cyber-confirm-modal" class="modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+        <div class="cyber-modal-content"
+            style="background: #0d1117; border: 2px solid var(--accent-color, #00ff66); padding: 25px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
+            <h3 id="cyber-confirm-title" style="color: #fff; margin-bottom: 15px; font-family: monospace;">DIQQAT</h3>
+            <p id="cyber-confirm-text" style="color: #8b949e; margin-bottom: 25px; font-size: 14px;">Haqiqatan ham bu
+                amalni bajarmoqchimisiz?</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="cyber-confirm-yes" class="cyber-btn primary-btn"
+                    style="flex: 1; padding: 10px; background: #00ff66; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;">HA</button>
+                <button id="cyber-confirm-no" class="cyber-btn danger-btn"
+                    style="flex: 1; padding: 10px; background: #ff0055; color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;">YO'Q</button>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

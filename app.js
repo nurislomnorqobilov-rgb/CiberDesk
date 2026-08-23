@@ -1,275 +1,433 @@
-// ================= ASOSIY O'ZGARUVCHILAR VA HOLAT =================
-let currentRole = localStorage.getItem('user_role') || "Admin";
-let currentName = localStorage.getItem('user_name') || "Nurislom";
+let totalCoins = parseInt(localStorage.getItem('ukasi_coins')) || 0;
+let dailyEarned = parseInt(localStorage.getItem('ukasi_daily')) || 0;
+const DAILY_LIMIT = 50;
 
-let currentUser = {
-    name: currentName,
-    role: currentRole,
-    coins: parseInt(localStorage.getItem('user_coins')) || 7,
-    dailyLimit: parseInt(localStorage.getItem('user_limit')) || 15,
-    maxLimit: 50
+let tasks = JSON.parse(localStorage.getItem('ukasi_tasks')) || [
+    { name: "Matematika darsini qilish" },
+    { name: "Ingliz tili so'zlarini yodlash" }
+];
+let historyLog = JSON.parse(localStorage.getItem('ukasi_history')) || [];
+
+let savedTheme = localStorage.getItem('ukasi_theme') || 'theme-cyan';
+document.body.className = savedTheme;
+
+let currentRole = localStorage.getItem('ukasi_role') || null;
+
+let userProfiles = JSON.parse(localStorage.getItem('ukasi_profiles')) || {
+    admin: { name: "Nurislom", avatar: "N", pass: "admin123" },
+    student: { name: "Habibulloh", avatar: "H", pass: "uka123" }
 };
 
-// Standart yoki saqlangan parol
-let currentPassword = localStorage.getItem('user_password') || "1234";
+const marketItems = [
+    { name: "1 Soat Kompyuter o'yini", price: 30, img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=300&q=80" },
+    { name: "Shokolad (Snickers)", price: 15, img: "https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=300&q=80" },
+    { name: "Kino ko'rish", price: 50, img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=300&q=80" }
+];
 
-// ================= DASTUR ISHGA TUSHGANDA =================
-document.addEventListener("DOMContentLoaded", () => {
-    checkAuth();
-    updateUI();
-    loadTasks();
-    loadHistory();
+const loginScreen = document.getElementById('login-screen');
+const appContainer = document.getElementById('app-container');
+
+function checkAuth() {
+    if (currentRole === 'admin' || currentRole === 'student') {
+        loginScreen.style.display = 'none';
+        appContainer.style.display = 'flex';
+        setupRoleUI();
+    } else {
+        loginScreen.style.display = 'flex';
+        appContainer.style.display = 'none';
+    }
+}
+
+// Parolni ko'rsatish / yashirish funksiyasi (Ko'zcha)
+function togglePasswordVisibility(fieldId, iconElement) {
+    const inputField = document.getElementById(fieldId);
+    if (inputField.type === "password") {
+        inputField.type = "text";
+        iconElement.textContent = "🙈";
+    } else {
+        inputField.type = "password";
+        iconElement.textContent = "👁️";
+    }
+}
+
+document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pass = document.getElementById('login-password').value.trim();
+    const errorText = document.getElementById('login-error');
+
+    if (pass === userProfiles.admin.pass) {
+        currentRole = 'admin';
+        localStorage.setItem('ukasi_role', 'admin');
+        errorText.textContent = '';
+        document.getElementById('login-password').value = '';
+        checkAuth();
+        showToast("Admin rejimi yoqildi!", "success");
+    } else if (pass === userProfiles.student.pass) {
+        currentRole = 'student';
+        localStorage.setItem('ukasi_role', 'student');
+        errorText.textContent = '';
+        document.getElementById('login-password').value = '';
+        checkAuth();
+        showToast("O'quvchi rejimi yoqildi!", "success");
+    } else {
+        errorText.textContent = "Parol noto'g'ri!";
+    }
 });
 
-// ================= AUTENTIFIKASIYA (PAROL VA PROFIL) =================
-function checkAuth() {
-    const isAuth = sessionStorage.getItem("is_authenticated");
-    const loginScreen = document.getElementById("login-screen");
-    
-    if (loginScreen) {
-        if (isAuth === "true") {
-            loginScreen.style.display = "none";
-        } else {
-            loginScreen.style.display = "flex";
-        }
-    }
-}
-
-function login() {
-    const passwordInput = document.getElementById("login-password");
-    const errorText = document.getElementById("login-error");
-    
-    // Kim kirayotganini aniqlash uchun oddiy shart (yoki parol orqali, yoki tanlov)
-    // Bu yerda xohishga ko'ra: agar parol "1234" bo'lsa Nurislom (Admin), boshqa parol bo'lsa Habibulloh (O'quvchi) qilishimiz mumkin
-    // Yoki siz istagan boshqa mantiq. Keling, parolni kiritganda oddiy tekshiruv qilamiz:
-    
-    if (!passwordInput) return;
-
-    if (passwordInput.value === currentPassword) {
-        sessionStorage.setItem("is_authenticated", "true");
-        
-        // Agar parol oddiy admin paroli bo'lsa Nurislom/Admin, aks holda Habibulloh/O'quvchi qilamiz
-        // Hozircha sizning profilingiz bo'yicha:
-        sessionStorage.setItem("logged_name", currentUser.name);
-        sessionStorage.setItem("logged_role", currentUser.role);
-
-        const loginScreen = document.getElementById("login-screen");
-        if (loginScreen) loginScreen.style.display = "none";
-        
-        showToast(`Xush kelibsiz, ${currentUser.name}!`, "success");
-        passwordInput.value = "";
-        if (errorText) errorText.textContent = "";
-        updateUI();
-    } else {
-        if (errorText) errorText.textContent = "Parol noto'g'ri! Qaytadan urinib ko'ring.";
-        showToast("Parol noto'g'ri!", "error");
-    }
-}
-
 function logout() {
-    sessionStorage.removeItem("is_authenticated");
-    location.reload();
+    currentRole = null;
+    localStorage.removeItem('ukasi_role');
+    checkAuth();
+    showToast("Tizimdan chiqildi", "info");
 }
 
-// Profilni almashtirish funksiyasi (Siz yoki Ukangiz kirishi uchun)
-function switchProfile(profileType) {
-    if (profileType === 'admin') {
-        currentUser.name = "Nurislom";
-        currentUser.role = "Admin";
-    } else if (profileType === 'student') {
-        currentUser.name = "Habibulloh";
-        currentUser.role = "O'quvchi";
-    }
-    
-    localStorage.setItem('user_name', currentUser.name);
-    localStorage.setItem('user_role', currentUser.role);
-    updateUI();
-    showToast(`Profil ${currentUser.name} (${currentUser.role}) ga o'zgardi!`, "success");
-}
+function setupRoleUI() {
+    const adminPanel = document.getElementById('admin-task-panel');
+    const welcomeTitle = document.getElementById('welcome-title');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    const resetDayBtn = document.getElementById('reset-day-btn');
+    const profile = userProfiles[currentRole];
 
-// ================= PAROLNI O'ZGARTIRISH =================
-function changePassword() {
-    const oldPassInput = document.getElementById("old-password");
-    const newPassInput = document.getElementById("new-password");
+    document.getElementById('profile-name').textContent = profile.name;
+    document.getElementById('profile-role').textContent = currentRole === 'admin' ? "Admin" : "O'quvchi";
+    document.getElementById('profile-avatar').textContent = profile.avatar;
 
-    if (!oldPassInput || !newPassInput) return;
-
-    if (oldPassInput.value === currentPassword) {
-        if (newPassInput.value.trim().length > 0) {
-            currentPassword = newPassInput.value;
-            localStorage.setItem('user_password', currentPassword);
-            showToast("Parol muvaffaqiyatli o'zgartirildi va saqlandi!", "success");
-            oldPassInput.value = "";
-            newPassInput.value = "";
-            closeModal('settings-modal');
-        } else {
-            showToast("Yangi parol bo'sh bo'lishi mumkin emas!", "error");
-        }
+    if (currentRole === 'admin') {
+        adminPanel.style.display = 'block';
+        clearHistoryBtn.style.display = 'block';
+        resetDayBtn.style.display = 'block';
+        welcomeTitle.textContent = `[ XUSH KELIBSIZ, ${profile.name.toUpperCase()}! ]`;
     } else {
-        showToast("Eski parol noto'g'ri kiritildi!", "error");
-    }
-}
-
-// ================= SAHIFALARNI ALMASHTIRISH (NAVIGATSIYA) =================
-function switchView(viewId, btnElement) {
-    document.querySelectorAll('.view-section').forEach(section => {
-        section.classList.remove('active');
-    });
-
-    const targetSection = document.getElementById(viewId);
-    if (targetSection) {
-        targetSection.classList.add('active');
+        adminPanel.style.display = 'none';
+        clearHistoryBtn.style.display = 'none';
+        resetDayBtn.style.display = 'none';
+        welcomeTitle.textContent = `[ SALOM, ${profile.name.toUpperCase()}! ]`;
     }
 
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    if (btnElement) {
-        btnElement.classList.add('active');
+    updateUI();
+    renderTasks();
+    renderMarket();
+    renderHistory();
+}
+
+function openProfileModal() {
+    const profile = userProfiles[currentRole];
+    document.getElementById('modal-profile-name').textContent = profile.name;
+    document.getElementById('modal-profile-role').textContent = currentRole === 'admin' ? "Admin" : "O'quvchi";
+    document.getElementById('modal-avatar-preview').textContent = profile.avatar;
+    document.getElementById('modal-total-tasks').textContent = `${tasks.length} ta`;
+    document.getElementById('modal-total-coins').textContent = `${totalCoins} 💰`;
+
+    document.getElementById('edit-name-input').value = profile.name;
+    document.getElementById('edit-avatar-input').value = profile.avatar;
+    document.getElementById('new-password-input').value = '';
+
+    document.getElementById('profile-modal').style.display = 'flex';
+}
+
+function closeProfileModal() {
+    document.getElementById('profile-modal').style.display = 'none';
+}
+
+// Barcha profil o'zgarishlarini bitta tugma bilan saqlash va oynani yopish
+function saveAllProfileChanges() {
+    const newName = document.getElementById('edit-name-input').value.trim();
+    const newAvatar = document.getElementById('edit-avatar-input').value.trim();
+    const newPass = document.getElementById('new-password-input').value.trim();
+
+    if (!newName) {
+        showToast("Ismni bo'sh qoldirib bo'lmaydi!", "error");
+        return;
     }
-
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebar-overlay");
-    if (sidebar) sidebar.classList.remove("active");
-    if (overlay) overlay.classList.remove("active");
-}
-
-// ================= INTERFEYSNI YANGILASH =================
-function updateUI() {
-    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
-    document.querySelectorAll('.user-role-display').forEach(el => el.textContent = currentUser.role);
-    
-    const coinElements = document.querySelectorAll('.user-coins-display');
-    coinElements.forEach(el => el.textContent = currentUser.coins);
-
-    const limitElements = document.querySelectorAll('.user-limit-display');
-    limitElements.forEach(el => el.textContent = `${currentUser.dailyLimit} / ${currentUser.maxLimit}`);
-
-    localStorage.setItem('user_coins', currentUser.coins);
-    localStorage.setItem('user_limit', currentUser.dailyLimit);
-    localStorage.setItem('user_name', currentUser.name);
-    localStorage.setItem('user_role', currentUser.role);
-}
-
-// ================= DARSLAR VA VAZIFALAR =================
-let tasks = JSON.parse(localStorage.getItem('cyber_tasks')) || [];
-
-function addTask() {
-    const input = document.getElementById("new-task-input");
-    if (!input || input.value.trim() === "") {
-        showToast("Dars nomini kiriting!", "error");
+    if (!newAvatar) {
+        showToast("Belgi kiritilmadi!", "error");
         return;
     }
 
-    const newTask = {
-        id: Date.now(),
-        name: input.value,
-        completed: false
-    };
+    userProfiles[currentRole].name = newName;
+    userProfiles[currentRole].avatar = newAvatar;
 
-    tasks.push(newTask);
-    saveTasks();
-    renderTasks();
-    input.value = "";
-    showToast("Yangi dars qo'shildi!", "success");
+    if (newPass !== "") {
+        if (newPass.length < 4) {
+            showToast("Parol kamida 4 ta belgidan iborat bo'lsin!", "error");
+            return;
+        }
+        userProfiles[currentRole].pass = newPass;
+    }
+
+    localStorage.setItem('ukasi_profiles', JSON.stringify(userProfiles));
+    setupRoleUI();
+    closeProfileModal();
+    showToast("Profil ma'lumotlari yangilandi!", "success");
 }
 
-function deleteTask(id) {
-    tasks = tasks.filter(task => task.id !== id);
-    saveTasks();
+function showToast(message, type = "success") {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function updateUI() {
+    document.getElementById('total-coins').textContent = `${totalCoins} 💰`;
+    document.getElementById('daily-earned').textContent = dailyEarned;
+    document.getElementById('market-balance').textContent = totalCoins;
+    
+    localStorage.setItem('ukasi_coins', totalCoins);
+    localStorage.setItem('ukasi_daily', dailyEarned);
+    localStorage.setItem('ukasi_tasks', JSON.stringify(tasks));
+    localStorage.setItem('ukasi_history', JSON.stringify(historyLog));
+}
+
+function renderTasks() {
+    const taskContainer = document.getElementById('tasks-list');
+    taskContainer.innerHTML = '';
+
+    if (tasks.length === 0) {
+        taskContainer.innerHTML = '<p style="color: #888;">Hozircha darslar mavjud emas...</p>';
+        return;
+    }
+
+    tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+
+        if (currentRole === 'admin') {
+            li.innerHTML = `
+                <span>>_ ${task.name}</span>
+                <div class="task-actions">
+                    <input type="number" id="coin-input-${index}" placeholder="Coin">
+                    <button class="cyber-btn primary-btn" onclick="giveCoin(${index}, '${task.name}')">+</button>
+                    <button class="cyber-btn danger-btn" onclick="takeCoin(${index}, '${task.name}')">-</button>
+                    <button class="cyber-btn danger-btn" onclick="deleteTask(${index})">X</button>
+                </div>
+            `;
+        } else {
+            li.innerHTML = `
+                <span>>_ ${task.name}</span>
+                <span style="color: var(--accent-color); font-size: 13px;">[ VAZIFA ]</span>
+            `;
+        }
+        taskContainer.appendChild(li);
+    });
+}
+
+function renderMarket() {
+    const marketContainer = document.getElementById('market-list');
+    marketContainer.innerHTML = ''; 
+
+    marketItems.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'market-card';
+        div.innerHTML = `
+            <img src="${item.img}" alt="${item.name}">
+            <div class="market-info">
+                <h4>${item.name}</h4>
+                <p>${item.price} 💰</p>
+                <button class="cyber-btn primary-btn" onclick="buyItem(${index})">SOTIB OLISH</button>
+            </div>
+        `;
+        marketContainer.appendChild(div);
+    });
+}
+
+function renderHistory() {
+    const historyContainer = document.getElementById('history-list');
+    historyContainer.innerHTML = '';
+
+    if (historyLog.length === 0) {
+        historyContainer.innerHTML = '<p style="color: #888;">Hozircha tarix bo\'sh...</p>';
+        return;
+    }
+
+    historyLog.slice().reverse().forEach(log => {
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        li.innerHTML = `
+            <span>${log.text}</span>
+            <span style="font-weight: bold; color: ${log.color};">${log.amount}</span>
+        `;
+        historyContainer.appendChild(li);
+    });
+}
+
+const addTaskBtn = document.getElementById('add-task-btn');
+if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', () => {
+        const taskInput = document.getElementById('task-input');
+        const taskName = taskInput.value.trim();
+
+        if (taskName !== '') {
+            tasks.push({ name: taskName });
+            taskInput.value = ''; 
+            updateUI();
+            renderTasks();
+            showToast("Dars qo'shildi!", "success");
+        } else {
+            showToast("Dars nomini kiriting!", "error");
+        }
+    });
+}
+
+function deleteTask(index) {
+    tasks.splice(index, 1);
+    updateUI();
     renderTasks();
     showToast("Dars o'chirildi", "info");
 }
 
-function saveTasks() {
-    localStorage.setItem('cyber_tasks', JSON.stringify(tasks));
-}
+function giveCoin(index, taskName) {
+    const inputField = document.getElementById(`coin-input-${index}`);
+    const amount = parseInt(inputField.value);
 
-function loadTasks() {
-    renderTasks();
-}
-
-function renderTasks() {
-    const listContainer = document.getElementById("tasks-list");
-    if (!listContainer) return;
-
-    listContainer.innerHTML = "";
-    if (tasks.length === 0) {
-        listContainer.innerHTML = "<p style='color: #8892b0; text-align: center; padding: 20px;'>Hozircha darslar mavjud emas.</p>";
+    if (isNaN(amount) || amount <= 0) {
+        showToast("To'g'ri raqam kiriting!", "error");
         return;
     }
 
-    tasks.forEach(task => {
-        const li = document.createElement("li");
-        li.className = "task-item";
-        li.innerHTML = `
-            <span>${task.name}</span>
-            <div class="task-actions">
-                <button class="cyber-btn danger-btn" onclick="deleteTask(${task.id})">O'chirish</button>
-            </div>
-        `;
-        listContainer.appendChild(li);
-    });
-}
-
-// ================= TARIX (HISTORY) =================
-let historyList = JSON.parse(localStorage.getItem('cyber_history')) || [];
-
-function loadHistory() {
-    const container = document.getElementById("history-list");
-    if (!container) return;
-
-    container.innerHTML = "";
-    if (historyList.length === 0) {
-        container.innerHTML = "<p style='color: #8892b0; text-align: center; padding: 20px;'>Tarix bo'sh.</p>";
+    if (dailyEarned + amount > DAILY_LIMIT) {
+        showToast(`Limit! Qolgan limit: ${DAILY_LIMIT - dailyEarned}`, "error");
         return;
     }
 
-    historyList.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "history-item";
-        div.innerHTML = `<span>${item.text}</span> <span style="font-size: 11px; color: #8892b0;">${item.date}</span>`;
-        container.appendChild(div);
+    totalCoins += amount;
+    dailyEarned += amount;
+    inputField.value = ''; 
+
+    historyLog.push({
+        text: `Dars bajarildi: "${taskName}"`,
+        amount: `+${amount} 💰`,
+        color: "#00ff66"
     });
+
+    updateUI();
+    renderHistory();
+    showToast(`${amount} coin qo'shildi.`, "success");
 }
 
-// ================= MODALLARNI BOSHQARISH =================
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = "flex";
-}
+function takeCoin(index, taskName) {
+    const inputField = document.getElementById(`coin-input-${index}`);
+    const amount = parseInt(inputField.value);
 
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = "none";
-}
-
-// ================= MOBIL MENYU =================
-function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebar-overlay");
-    if (sidebar) sidebar.classList.toggle("active");
-    if (overlay) overlay.classList.toggle("active");
-}
-
-// ================= TOAST XABARLAR =================
-function showToast(message, type = "success") {
-    let container = document.getElementById("toast-container");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "toast-container";
-        document.body.appendChild(container);
+    if (isNaN(amount) || amount <= 0) {
+        showToast("To'g'ri raqam kiriting!", "error");
+        return;
     }
 
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
+    if (totalCoins - amount < 0) {
+        showToast("Coinlar 0 dan pastga tushmaydi!", "error");
+        return;
+    }
 
-    container.appendChild(toast);
+    totalCoins -= amount;
+    inputField.value = ''; 
 
-    setTimeout(() => {
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    historyLog.push({
+        text: `Jazo olindi: "${taskName}"`,
+        amount: `-${amount} 💰`,
+        color: "#ff0055"
+    });
+
+    updateUI();
+    renderHistory();
+    showToast(`${amount} coin olib tashlandi.`, "error");
+}
+
+function buyItem(index) {
+    const item = marketItems[index];
+    if (totalCoins >= item.price) {
+        totalCoins -= item.price;
+        historyLog.push({
+            text: `Marketdan xarid: "${item.name}"`,
+            amount: `-${item.price} 💰`,
+            color: "#ff0055"
+        });
+        updateUI();
+        renderHistory();
+        showToast(`"${item.name}" sotib olindi!`, "success");
+    } else {
+        showToast("Coin yetarli emas!", "error");
+    }
+}
+
+document.getElementById('clear-history-btn').addEventListener('click', () => {
+    showCyberConfirm("TARIXNI TOZALASH", "Barcha tarix tozalanib ketishini tasdiqlaysizmi?", () => {
+        historyLog = [];
+        updateUI();
+        renderHistory();
+        showToast("Tarix tozalandi", "info");
+    });
+});
+
+document.getElementById('reset-day-btn').addEventListener('click', () => {
+    showCyberConfirm("YANGI KUN", "Yangi kunni boshlamoqchimisiz? Bugungi limit noldan boshlanadi.", () => {
+        dailyEarned = 0;
+        updateUI();
+        showToast("Yangi kun boshlandi!", "info");
+    });
+});
+
+function setTheme(themeName) {
+    document.body.className = themeName;
+    localStorage.setItem('ukasi_theme', themeName);
+    showToast("Mavzu o'zgartirildi!", "info");
+}
+
+const btnDashboard = document.getElementById('btn-dashboard');
+const btnMarket = document.getElementById('btn-market');
+const btnHistory = document.getElementById('btn-history');
+const viewDashboard = document.getElementById('view-dashboard');
+const viewMarket = document.getElementById('view-market');
+const viewHistory = document.getElementById('view-history');
+
+function switchView(activeBtn, activeView) {
+    [btnDashboard, btnMarket, btnHistory].forEach(b => b.classList.remove('active'));
+    [viewDashboard, viewMarket, viewHistory].forEach(v => v.classList.remove('active'));
+    activeBtn.classList.add('active');
+    activeView.classList.add('active');
+}
+
+btnDashboard.addEventListener('click', () => switchView(btnDashboard, viewDashboard));
+btnMarket.addEventListener('click', () => switchView(btnMarket, viewMarket));
+btnHistory.addEventListener('click', () => {
+    switchView(btnHistory, viewHistory);
+    renderHistory();
+});
+
+checkAuth();
+
+// Zamonaviy tasdiqlash oynasini chaqirish funksiyasi
+function showCyberConfirm(title, text, onYes) {
+    const modal = document.getElementById('cyber-confirm-modal');
+    const titleEl = document.getElementById('cyber-confirm-title');
+    const textEl = document.getElementById('cyber-confirm-text');
+    const yesBtn = document.getElementById('cyber-confirm-yes');
+    const noBtn = document.getElementById('cyber-confirm-no');
+
+    if (!modal) {
+        // Agar HTML ga qo'shish unutilgan bo'lsa, oddiy confirm ishlayveradi
+        if (confirm(text)) onYes();
+        return;
+    }
+
+    titleEl.textContent = title;
+    textEl.textContent = text;
+    modal.style.display = 'flex';
+
+    // Eski hodisalarni tozalash uchun klonlash
+    const newYesBtn = yesBtn.cloneNode(true);
+    const newNoBtn = noBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+    noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+
+    newYesBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        onYes();
+    });
+
+    newNoBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
 }
