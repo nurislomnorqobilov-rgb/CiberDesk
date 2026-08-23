@@ -31,7 +31,6 @@ const appContainer = document.getElementById('app-container');
 async function loadDataFromFirebase() {
     if (!window.db) return;
     try {
-        const dbRefInstance = window.dbRef(window.db);
         const snapshot = await window.dbGet(window.dbRef(window.db, 'cyberdesk_data'));
         if (snapshot.exists()) {
             const data = snapshot.val();
@@ -46,7 +45,7 @@ async function loadDataFromFirebase() {
     } catch (error) {
         console.error("Ma'lumotni olishda xatolik:", error);
     }
-    updateUI();
+    updateUIWithoutSaving(); // Faqat ekranga chiqaramiz, bazaga qayta yozmaymiz
     if (currentRole) setupRoleUI();
 }
 
@@ -76,7 +75,7 @@ function checkAuth() {
     }
 }
 
-// Parolni ko'rsatish / yashirish funksiyasi (Ko'zcha)
+// Parolni ko'rsatish / yashirish funksiyasi
 function togglePasswordVisibility(fieldId, iconElement) {
     const inputField = document.getElementById(fieldId);
     if (inputField.type === "password") {
@@ -142,7 +141,7 @@ function setupRoleUI() {
         welcomeTitle.textContent = `[ SALOM, ${profile.name.toUpperCase()}! ]`;
     }
 
-    updateUI();
+    updateUIWithoutSaving();
     renderTasks();
     renderMarket();
     renderHistory();
@@ -207,12 +206,20 @@ function showToast(message, type = "success") {
     setTimeout(() => toast.remove(), 3000);
 }
 
+// Ekranni yangilash va bazaga saqlash
 function updateUI() {
     document.getElementById('total-coins').textContent = `${totalCoins} 💰`;
     document.getElementById('daily-earned').textContent = dailyEarned;
     document.getElementById('market-balance').textContent = totalCoins;
     
-    saveDataToFirebase();
+    saveDataToFirebase(); // Faqat amal bajarilganda saqlanadi
+}
+
+// Faqat ekranni yangilash (bazaga yozmasdan)
+function updateUIWithoutSaving() {
+    document.getElementById('total-coins').textContent = `${totalCoins} 💰`;
+    document.getElementById('daily-earned').textContent = dailyEarned;
+    document.getElementById('market-balance').textContent = totalCoins;
 }
 
 function renderTasks() {
