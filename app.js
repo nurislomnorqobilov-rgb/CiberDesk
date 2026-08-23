@@ -1,5 +1,5 @@
-let totalCoins = 0;
-let dailyEarned = 0;
+let totalCoins = Number(localStorage.getItem('cyber_coins')) || 0;
+let dailyEarned = Number(localStorage.getItem('cyber_daily')) || 0;
 const DAILY_LIMIT = 50;
 
 let tasks = [
@@ -51,7 +51,10 @@ async function loadDataFromFirebase() {
 
 // FIREBASE'GA MA'LUMOTLARNI SAQLASH
 function saveDataToFirebase() {
-    if (!window.db) return;
+    if (!window.db) {
+        console.error("Firebase ma'lumotlar bazasi topilmadi!");
+        return;
+    }
     window.dbSet(window.dbRef(window.db, 'cyberdesk_data'), {
         coins: totalCoins,
         daily: dailyEarned,
@@ -59,8 +62,11 @@ function saveDataToFirebase() {
         history: historyLog,
         profiles: userProfiles,
         theme: savedTheme
+    }).then(() => {
+        console.log("Ma'lumot Firebase'ga muvaffaqiyatli saqlandi!");
     }).catch(error => {
         console.error("Saqlashda xatolik:", error);
+        showToast("Bazaga saqlashda xatolik: " + error.message, "error");
     });
 }
 
@@ -220,6 +226,10 @@ function updateUIWithoutSaving() {
     document.getElementById('total-coins').textContent = `${totalCoins} 💰`;
     document.getElementById('daily-earned').textContent = dailyEarned;
     document.getElementById('market-balance').textContent = totalCoins;
+    
+    // Brauzerning o'zida ham zaxiralab turamiz
+    localStorage.setItem('cyber_coins', totalCoins);
+    localStorage.setItem('cyber_daily', dailyEarned);
 }
 
 function renderTasks() {
@@ -438,10 +448,11 @@ btnHistory.addEventListener('click', () => {
     renderHistory();
 });
 
-// Dastlabki ishga tushish va Firebase'dan ma'lumotlarni o'qish
-checkAuth();
-loadDataFromFirebase();
-
+// Firebase to'liq yuklanib bo'lgachgina ma'lumotni o'qiymiz va ekranni ochamiz
+window.addEventListener('load', async () => {
+    await loadDataFromFirebase();
+    checkAuth();
+});
 function showCyberConfirm(title, text, onYes) {
     const modal = document.getElementById('cyber-confirm-modal');
     const titleEl = document.getElementById('cyber-confirm-title');
