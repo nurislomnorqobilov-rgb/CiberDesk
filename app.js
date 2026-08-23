@@ -1,19 +1,19 @@
-let totalCoins = parseInt(localStorage.getItem('ukasi_coins')) || 0;
-let dailyEarned = parseInt(localStorage.getItem('ukasi_daily')) || 0;
+let totalCoins = 0;
+let dailyEarned = 0;
 const DAILY_LIMIT = 50;
 
-let tasks = JSON.parse(localStorage.getItem('ukasi_tasks')) || [
+let tasks = [
     { name: "Matematika darsini qilish" },
     { name: "Ingliz tili so'zlarini yodlash" }
 ];
-let historyLog = JSON.parse(localStorage.getItem('ukasi_history')) || [];
+let historyLog = [];
 
-let savedTheme = localStorage.getItem('ukasi_theme') || 'theme-cyan';
+let savedTheme = 'theme-cyan';
 document.body.className = savedTheme;
 
 let currentRole = localStorage.getItem('ukasi_role') || null;
 
-let userProfiles = JSON.parse(localStorage.getItem('ukasi_profiles')) || {
+let userProfiles = {
     admin: { name: "Nurislom", avatar: "N", pass: "admin123" },
     student: { name: "Habibulloh", avatar: "H", pass: "uka123" }
 };
@@ -26,6 +26,44 @@ const marketItems = [
 
 const loginScreen = document.getElementById('login-screen');
 const appContainer = document.getElementById('app-container');
+
+// FIREBASE'DAN MA'LUMOTLARNI YUKLAB OLISH
+async function loadDataFromFirebase() {
+    if (!window.db) return;
+    try {
+        const dbRefInstance = window.dbRef(window.db);
+        const snapshot = await window.dbGet(window.dbRef(window.db, 'cyberdesk_data'));
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            totalCoins = data.coins !== undefined ? data.coins : 0;
+            dailyEarned = data.daily !== undefined ? data.daily : 0;
+            tasks = data.tasks || tasks;
+            historyLog = data.history || [];
+            userProfiles = data.profiles || userProfiles;
+            savedTheme = data.theme || 'theme-cyan';
+            document.body.className = savedTheme;
+        }
+    } catch (error) {
+        console.error("Ma'lumotni olishda xatolik:", error);
+    }
+    updateUI();
+    if (currentRole) setupRoleUI();
+}
+
+// FIREBASE'GA MA'LUMOTLARNI SAQLASH
+function saveDataToFirebase() {
+    if (!window.db) return;
+    window.dbSet(window.dbRef(window.db, 'cyberdesk_data'), {
+        coins: totalCoins,
+        daily: dailyEarned,
+        tasks: tasks,
+        history: historyLog,
+        profiles: userProfiles,
+        theme: savedTheme
+    }).catch(error => {
+        console.error("Saqlashda xatolik:", error);
+    });
+}
 
 function checkAuth() {
     if (currentRole === 'admin' || currentRole === 'student') {
@@ -129,7 +167,6 @@ function closeProfileModal() {
     document.getElementById('profile-modal').style.display = 'none';
 }
 
-// Barcha profil o'zgarishlarini bitta tugma bilan saqlash va oynani yopish
 function saveAllProfileChanges() {
     const newName = document.getElementById('edit-name-input').value.trim();
     const newAvatar = document.getElementById('edit-avatar-input').value.trim();
@@ -155,7 +192,7 @@ function saveAllProfileChanges() {
         userProfiles[currentRole].pass = newPass;
     }
 
-    localStorage.setItem('ukasi_profiles', JSON.stringify(userProfiles));
+    saveDataToFirebase();
     setupRoleUI();
     closeProfileModal();
     showToast("Profil ma'lumotlari yangilandi!", "success");
@@ -175,10 +212,7 @@ function updateUI() {
     document.getElementById('daily-earned').textContent = dailyEarned;
     document.getElementById('market-balance').textContent = totalCoins;
     
-    localStorage.setItem('ukasi_coins', totalCoins);
-    localStorage.setItem('ukasi_daily', dailyEarned);
-    localStorage.setItem('ukasi_tasks', JSON.stringify(tasks));
-    localStorage.setItem('ukasi_history', JSON.stringify(historyLog));
+    saveDataToFirebase();
 }
 
 function renderTasks() {
@@ -370,8 +404,9 @@ document.getElementById('reset-day-btn').addEventListener('click', () => {
 });
 
 function setTheme(themeName) {
+    savedTheme = themeName;
     document.body.className = themeName;
-    localStorage.setItem('ukasi_theme', themeName);
+    saveDataToFirebase();
     showToast("Mavzu o'zgartirildi!", "info");
 }
 
@@ -396,9 +431,10 @@ btnHistory.addEventListener('click', () => {
     renderHistory();
 });
 
+// Dastlabki ishga tushish va Firebase'dan ma'lumotlarni o'qish
 checkAuth();
+loadDataFromFirebase();
 
-// Zamonaviy tasdiqlash oynasini chaqirish funksiyasi
 function showCyberConfirm(title, text, onYes) {
     const modal = document.getElementById('cyber-confirm-modal');
     const titleEl = document.getElementById('cyber-confirm-title');
@@ -407,7 +443,6 @@ function showCyberConfirm(title, text, onYes) {
     const noBtn = document.getElementById('cyber-confirm-no');
 
     if (!modal) {
-        // Agar HTML ga qo'shish unutilgan bo'lsa, oddiy confirm ishlayveradi
         if (confirm(text)) onYes();
         return;
     }
@@ -416,7 +451,6 @@ function showCyberConfirm(title, text, onYes) {
     textEl.textContent = text;
     modal.style.display = 'flex';
 
-    // Eski hodisalarni tozalash uchun klonlash
     const newYesBtn = yesBtn.cloneNode(true);
     const newNoBtn = noBtn.cloneNode(true);
     yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
@@ -430,4 +464,16 @@ function showCyberConfirm(title, text, onYes) {
     newNoBtn.addEventListener('click', () => {
         modal.style.display = 'none';
     });
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+    if (overlay) {
+        overlay.classList.toggle('active');
+    }
 }

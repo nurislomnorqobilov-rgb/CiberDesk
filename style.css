@@ -623,3 +623,44 @@ input {
 .login-hints b {
     color: var(--accent-color, #b537f2);
 }
+
+/* MOBIL SIDEBAR VA OVERLAYNI TO'G'RIDAN-TO'G'RI SOZLASH */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 280px;
+        height: 100%;
+        background: var(--card-bg, #0d1117);
+        transition: left 0.3s ease;
+        z-index: 10001; /* Orqa fondan ustun turishi uchun */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    }
+    
+    .sidebar.active {
+        left: 0;
+    }
+    
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10000; /* Asosiy kontentdan ustun, menyudan pastda */
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+}
+
+/* Barcha tugmalar va navigatsiya elementlaridagi bosilgandagi ramkani olib tashlash */
+button:focus, 
+.nav-btn:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
