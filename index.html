@@ -199,7 +199,8 @@
     </div>
 
     <div id="toast-container"></div>
-    <!-- FIREBASE SDK KUTUBXONALARI -->
+
+    <!-- FIREBASE SDK KUTUBXONALARI VA ULANISH -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
         import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
@@ -207,7 +208,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyD6oaXeHDYTbjyKf3yHSfn6JxDgVuyVng4",
             authDomain: "ciberdesk-30daa.firebaseapp.com",
-            databaseURL: "https://ciberdesk-30daa-default-rtdb.firebaseio.com/", // <-- Shu yerga o'z bazangiz manzilini qo'yasiz
+            databaseURL: "https://ciberdesk-30daa-default-rtdb.firebaseio.com/",
             projectId: "ciberdesk-30daa",
             storageBucket: "ciberdesk-30daa.firebasestorage.app",
             messagingSenderId: "587418734349",
@@ -215,18 +216,19 @@
             measurementId: "G-WCY343LG1P"
         };
 
-        // Firebase ni ishga tushirish
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Buni global o'zgaruvchiga o'tkazamizki, app.js ishlata olsin
         window.db = db;
         window.dbRef = ref;
         window.dbSet = set;
         window.dbGet = get;
         window.dbChild = child;
     </script>
+    
+    <!-- ASOSIY SCRIPT -->
     <script src="app.js"></script>
+
     <!-- ZAMONAVIY TASDIQLASH MODALI -->
     <div id="cyber-confirm-modal" class="modal-overlay"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
