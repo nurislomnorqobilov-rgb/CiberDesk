@@ -380,7 +380,7 @@ input {
 .toast.error { background: #1f2833; border-color: #ff0055; }
 .toast.info { background: #1f2833; border-color: #fce300; }
 
-/* ================= MOBIL RESPONSIVE (TELEFONLAR UCHUN) ================= */
+/* ================= MOBIL RESPONSIVE (TELEFONLAR UCHUN TO'G'IRLANGAN) ================= */
 @media screen and (max-width: 768px) {
     .mobile-header {
         display: flex !important;
@@ -437,31 +437,36 @@ input {
         overflow: hidden !important;
     }
 
+    /* Xatolik to'g'irlangan joy: Sidebar boshida butunlay yashirin bo'ladi */
     .sidebar {
         position: fixed !important;
-        top: 0;
-        left: -100%;
-        width: 75% !important;
-        max-width: 300px;
+        top: 0 !important;
+        left: -100% !important;
+        width: 280px !important;
+        max-width: 80% !important;
         height: 100% !important;
-        transition: left 0.3s ease-in-out;
-        z-index: 1005;
+        transition: left 0.3s ease-in-out !important;
+        z-index: 10005 !important;
     }
 
     .sidebar.active {
         left: 0 !important;
     }
 
-    .sidebar-overlay.active {
-        display: block !important;
+    .sidebar-overlay {
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(0, 0, 0, 0.7);
         backdrop-filter: blur(3px);
-        z-index: 1004;
+        z-index: 10000;
+    }
+
+    .sidebar-overlay.active {
+        display: block !important;
     }
 
     .main-content {
@@ -624,41 +629,7 @@ input {
     color: var(--accent-color, #b537f2);
 }
 
-/* MOBIL SIDEBAR VA OVERLAYNI TO'G'RIDAN-TO'G'RI SOZLASH */
-@media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        left: -280px;
-        top: 0;
-        width: 280px;
-        height: 100%;
-        background: var(--card-bg, #0d1117);
-        transition: left 0.3s ease;
-        z-index: 10001; /* Orqa fondan ustun turishi uchun */
-        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
-    }
-    
-    .sidebar.active {
-        left: 0;
-    }
-    
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 10000; /* Asosiy kontentdan ustun, menyudan pastda */
-    }
-    
-    .sidebar-overlay.active {
-        display: block;
-    }
-}
-
-/* Barcha tugmalar va navigatsiya elementlaridagi bosilgandagi ramkani olib tashlash */
+/* Barcha tugmalar va navigatsiya elementlaridagi fokus ramkani olib tashlash */
 button:focus, 
 .nav-btn:focus {
     outline: none !important;
