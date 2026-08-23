@@ -1,13 +1,16 @@
 // ================= ASOSIY O'ZGARUVCHILAR VA HOLAT =================
+let currentRole = localStorage.getItem('user_role') || "Admin";
+let currentName = localStorage.getItem('user_name') || "Nurislom";
+
 let currentUser = {
-    name: "Nurislom Norqobilov",
-    role: "Ustoz",
-    coins: parseInt(localStorage.getItem('user_coins')) || 0,
-    dailyLimit: parseInt(localStorage.getItem('user_limit')) || 0,
+    name: currentName,
+    role: currentRole,
+    coins: parseInt(localStorage.getItem('user_coins')) || 7,
+    dailyLimit: parseInt(localStorage.getItem('user_limit')) || 15,
     maxLimit: 50
 };
 
-// Standart yoki saqlangan parol (Asl parol: "1234")
+// Standart yoki saqlangan parol
 let currentPassword = localStorage.getItem('user_password') || "1234";
 
 // ================= DASTUR ISHGA TUSHGANDA =================
@@ -18,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadHistory();
 });
 
-// ================= AUTENTIFIKASIYA (PAROL TEKSHIRISH) =================
+// ================= AUTENTIFIKASIYA (PAROL VA PROFIL) =================
 function checkAuth() {
     const isAuth = sessionStorage.getItem("is_authenticated");
     const loginScreen = document.getElementById("login-screen");
@@ -36,15 +39,27 @@ function login() {
     const passwordInput = document.getElementById("login-password");
     const errorText = document.getElementById("login-error");
     
+    // Kim kirayotganini aniqlash uchun oddiy shart (yoki parol orqali, yoki tanlov)
+    // Bu yerda xohishga ko'ra: agar parol "1234" bo'lsa Nurislom (Admin), boshqa parol bo'lsa Habibulloh (O'quvchi) qilishimiz mumkin
+    // Yoki siz istagan boshqa mantiq. Keling, parolni kiritganda oddiy tekshiruv qilamiz:
+    
     if (!passwordInput) return;
 
     if (passwordInput.value === currentPassword) {
         sessionStorage.setItem("is_authenticated", "true");
+        
+        // Agar parol oddiy admin paroli bo'lsa Nurislom/Admin, aks holda Habibulloh/O'quvchi qilamiz
+        // Hozircha sizning profilingiz bo'yicha:
+        sessionStorage.setItem("logged_name", currentUser.name);
+        sessionStorage.setItem("logged_role", currentUser.role);
+
         const loginScreen = document.getElementById("login-screen");
         if (loginScreen) loginScreen.style.display = "none";
-        showToast("Tizimga muvaffaqiyatli kirdingiz!", "success");
+        
+        showToast(`Xush kelibsiz, ${currentUser.name}!`, "success");
         passwordInput.value = "";
         if (errorText) errorText.textContent = "";
+        updateUI();
     } else {
         if (errorText) errorText.textContent = "Parol noto'g'ri! Qaytadan urinib ko'ring.";
         showToast("Parol noto'g'ri!", "error");
@@ -54,6 +69,22 @@ function login() {
 function logout() {
     sessionStorage.removeItem("is_authenticated");
     location.reload();
+}
+
+// Profilni almashtirish funksiyasi (Siz yoki Ukangiz kirishi uchun)
+function switchProfile(profileType) {
+    if (profileType === 'admin') {
+        currentUser.name = "Nurislom";
+        currentUser.role = "Admin";
+    } else if (profileType === 'student') {
+        currentUser.name = "Habibulloh";
+        currentUser.role = "O'quvchi";
+    }
+    
+    localStorage.setItem('user_name', currentUser.name);
+    localStorage.setItem('user_role', currentUser.role);
+    updateUI();
+    showToast(`Profil ${currentUser.name} (${currentUser.role}) ga o'zgardi!`, "success");
 }
 
 // ================= PAROLNI O'ZGARTIRISH =================
@@ -79,7 +110,7 @@ function changePassword() {
     }
 }
 
-// ================= SAHifalarni ALMASHTIRISH (NAVIGATSIYA) =================
+// ================= SAHIFALARNI ALMASHTIRISH (NAVIGATSIYA) =================
 function switchView(viewId, btnElement) {
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
@@ -98,14 +129,13 @@ function switchView(viewId, btnElement) {
         btnElement.classList.add('active');
     }
 
-    // Mobil menyuni yopish
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebar-overlay");
     if (sidebar) sidebar.classList.remove("active");
     if (overlay) overlay.classList.remove("active");
 }
 
-// ================= INTERFEYsni YANGILASH =================
+// ================= INTERFEYSNI YANGILASH =================
 function updateUI() {
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
     document.querySelectorAll('.user-role-display').forEach(el => el.textContent = currentUser.role);
@@ -118,6 +148,8 @@ function updateUI() {
 
     localStorage.setItem('user_coins', currentUser.coins);
     localStorage.setItem('user_limit', currentUser.dailyLimit);
+    localStorage.setItem('user_name', currentUser.name);
+    localStorage.setItem('user_role', currentUser.role);
 }
 
 // ================= DARSLAR VA VAZIFALAR =================
@@ -183,13 +215,6 @@ function renderTasks() {
 
 // ================= TARIX (HISTORY) =================
 let historyList = JSON.parse(localStorage.getItem('cyber_history')) || [];
-
-function addHistory(text) {
-    const date = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
-    historyList.unshift({ text, date });
-    localStorage.setItem('cyber_history', JSON.stringify(historyList));
-    loadHistory();
-}
 
 function loadHistory() {
     const container = document.getElementById("history-list");
