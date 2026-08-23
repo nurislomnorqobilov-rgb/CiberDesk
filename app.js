@@ -27,10 +27,10 @@ const marketItems = [
 const loginScreen = document.getElementById('login-screen');
 const appContainer = document.getElementById('app-container');
 
-// FIREBASE'DAN MA'LUMOTLARNI YUKLAB OLISH
 async function loadDataFromFirebase() {
     if (!window.db) return;
     try {
+        // .once() yoki get() orqali to'g'ridan-to'g'ri bazadan oxirgi ma'lumotni olamiz
         const snapshot = await window.dbGet(window.dbRef(window.db, 'cyberdesk_data'));
         if (snapshot.exists()) {
             const data = snapshot.val();
@@ -45,7 +45,7 @@ async function loadDataFromFirebase() {
     } catch (error) {
         console.error("Ma'lumotni olishda xatolik:", error);
     }
-    updateUIWithoutSaving(); // Faqat ekranga chiqaramiz, bazaga qayta yozmaymiz
+    updateUIWithoutSaving();
     if (currentRole) setupRoleUI();
 }
 
