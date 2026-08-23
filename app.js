@@ -19,9 +19,22 @@ let userProfiles = {
 };
 
 const marketItems = [
-    { name: "1 Soat Kompyuter o'yini", price: 30, img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=300&q=80" },
-    { name: "Shokolad (Snickers)", price: 15, img: "https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=300&q=80" },
-    { name: "Kino ko'rish", price: 50, img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=300&q=80" }
+    { name: "1 Soat Telefon o'ynash", price: 150, img: "https://root-nation.com/wp-content/uploads/2025/08/mobile-gaming-01.jpg" },
+    { name: "Shokolad (Snickers)", price: 200, img: "https://i.pinimg.com/736x/08/fb/1d/08fb1d6d350acdb31389d9f054397d65.jpg" },
+    { name: "15 000 so'm pul", price: 250, img: "https://i.pinimg.com/1200x/62/36/c1/6236c197307853afd309e907b13d5bd7.jpg" },
+    { name: "Kino ko'rish", price: 300, img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=300&q=80" },
+    { name: "O'qish uchun blaknot", price: 400, img: "https://i.pinimg.com/1200x/cd/62/57/cd62570d4e4dcfa086f5bd3b6a625d03.jpg" },
+    { name: "Chiroyli bakal", price: 500, img: "https://i.pinimg.com/736x/e6/57/c8/e657c8501495207175114edb9e08b79c.jpg" },
+    { name: "Choy va qahva ichish uchun termos", price: 600, img: "https://i.pinimg.com/736x/04/73/1a/04731a9b355b5847ca8d86c1fc00c592.jpg" },
+    { name: "Rasmli futbolka", price: 700, img: "https://i.pinimg.com/1200x/b1/73/dc/b173dc6ecbf363108b0ac2152b6b56a3.jpg" },
+    { name: "Sport uchun krasofka", price: 1100, img: "https://i.pinimg.com/736x/ea/10/ca/ea10ca7d49174ea966c313b9de5a4c4c.jpg" },
+    { name: "Futbol uchun butsi", price: 1500, img: "https://i.pinimg.com/1200x/dc/57/77/dc577765716080fb6f525a93d1a7aa57.jpg" },
+    { name: "Club formasi", price: 1700, img: "https://i.pinimg.com/736x/11/e6/a3/11e6a3ac2248a7b1c106e1a4293bf3b6.jpg" },
+    { name: "Futbol to'pi", price: 2300, img: "https://i.pinimg.com/1200x/7b/32/7d/7b327d687f73e233024ad1181958270b.jpg" },
+    { name: "Maktab uchun sumka", price: 2500, img: "https://i.pinimg.com/736x/81/87/7d/81877d320a17d5c65ccba038a7d42b47.jpg" },
+    { name: "100$ pul", price: 15000, img: "https://i.pinimg.com/1200x/fd/80/0c/fd800cfa4ce8d8ea4f871a2f3a0c425d.jpg" },
+    { name: "Telefon", price: 25000, img: "https://i.pinimg.com/736x/c7/aa/89/c7aa899b2d7a2abaa2fd040f5d8eae51.jpg" },
+    { name: "O'qish va ish uchun notebook", price: 50000, img: "https://i.pinimg.com/1200x/7b/95/f9/7b95f93f51ab9fd5507c94ff4950a8eb.jpg" }
 ];
 
 const loginScreen = document.getElementById('login-screen');
