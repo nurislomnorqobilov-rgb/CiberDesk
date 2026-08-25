@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberDesk - O'quv Tizimi</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body class="theme-cyan">
@@ -25,14 +27,13 @@
                 <button type="submit" class="cyber-btn primary-btn" style="width: 100%;">KIRISH</button>
             </form>
             <p id="login-error" class="login-error"></p>
-            <div class="login-hints"> </div>
         </div>
     </div>
 
     <!-- ASOSIY ILOVA -->
     <div id="app-container" class="app-container" style="display: none;">
 
-        <!-- MOBIL HEADER (Hamburger va Logo bir qatorda) -->
+        <!-- MOBIL HEADER -->
         <header class="mobile-header" id="mobile-header">
             <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">
                 <span></span>
@@ -42,10 +43,9 @@
             <span class="mobile-logo-text">CYBER<span>DESK</span></span>
         </header>
 
-        <!-- ORQA FON TRANSPARENT QORAYTIRISH (OVERLAY) -->
         <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- CHAP MENYU (DRAWER) -->
+        <!-- CHAP MENYU (SIDEBAR) -->
         <aside class="sidebar" id="sidebar">
             <div class="logo-area">
                 <h2>CYBER<span>DESK</span></h2>
@@ -61,35 +61,46 @@
 
             <!-- MAVZU O'ZGARTIRISH -->
             <div class="theme-switcher">
-                <p class="menu-label">MAVZU (4 XIL)</p>
+                <p class="menu-label">MAVZU (5 XIL)</p>
                 <div class="theme-btns">
                     <button class="t-btn cyan" onclick="setTheme('theme-cyan')" title="Neon Ko'k"></button>
                     <button class="t-btn green" onclick="setTheme('theme-green')" title="Neon Yashil"></button>
                     <button class="t-btn purple" onclick="setTheme('theme-purple')" title="Cyber Binafsha"></button>
                     <button class="t-btn light" onclick="setTheme('theme-light')" title="Kunduzgi Rejim"></button>
+                    <button class="t-btn fire" onclick="setTheme('theme-fire')" title="Neon Olov"></button>
                 </div>
             </div>
 
             <!-- PROFIL QISMI -->
-            <div class="profile-area" onclick="openProfileModal()" title="Profilni sozlash">
-                <div class="avatar" id="profile-avatar">U</div>
-                <div style="flex-grow: 1; overflow: hidden;">
-                    <p class="name" id="profile-name">Foydalanuvchi</p>
+            <div class="profile-area" onclick="openProfileModal()" title="Profilni sozlash" style="cursor: pointer;">
+                <div onclick="event.stopPropagation(); document.getElementById('avatar-input').click();"
+                    title="Profil rasmini o'zgartirish">
+                    <div id="profile-avatar"
+                        style="width: 48px; height: 48px; min-width: 48px; min-height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--accent-color, #00ff66);">
+                        U
+                    </div>
+                </div>
+
+                <input type="file" id="avatar-input" accept="image/*" style="display: none;"
+                    onchange="uploadProfileImage(event)">
+
+                <div style="flex-grow: 1; overflow: hidden; min-width: 0;">
+                    <p class="name" id="profile-name"
+                        style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Foydalanuvchi</p>
                     <p class="role" id="profile-role">Rol</p>
                 </div>
                 <button onclick="event.stopPropagation(); logout()" class="cyber-btn danger-btn"
-                    style="padding: 4px 6px; font-size: 8px;">Chiqish</button>
+                    style="padding: 4px 6px; font-size: 8px; flex-shrink: 0;">Chiqish</button>
             </div>
         </aside>
 
         <!-- O'NG ASOSIY QISM -->
         <main class="main-content">
-
-            <!-- BOSH SAHIFA -->
             <section id="view-dashboard" class="view-section active">
                 <div class="gradient-bg">
                     <h1 id="welcome-title" style="color: var(--accent-color); margin-bottom: 15px;">[ TIZIMGA XUSH
                         KELIBSIZ ]</h1>
+
                     <div class="stats-container">
                         <div class="stat-box">
                             <p style="font-size: 12px; color: #888;">Umumiy Coinlar</p>
@@ -99,8 +110,26 @@
                             <p style="font-size: 12px; color: #888;">Bugungi limit</p>
                             <h2><span id="daily-earned">0</span> / 50 💰</h2>
                         </div>
+                        <div class="stat-box">
+                            <p style="font-size: 12px; color: #888;">Uzluksuz kunlar</p>
+                            <h2 id="user-streak">🔥 0 kun</h2>
+                        </div>
                     </div>
-                    <button id="reset-day-btn" class="cyber-btn danger-btn">YANGI KUNNI BOSHLASH</button>
+
+                    <button id="reset-day-btn" class="cyber-btn danger-btn" style="margin-top: 15px;">YANGI KUNNI
+                        BOSHLASH</button>
+                </div>
+
+                <div id="pending-purchases-panel" class="panel" style="margin-bottom: 20px; display: none;">
+                    <h2>⏳ KUTILYOTGAN XARID SO'ROVLARI</h2>
+                    <p class="subtitle">Ukangiz sotib olmoqchi bo'lgan buyumlar</p>
+                    <div id="pending-list" class="pending-list-container" style="margin-top: 15px;"></div>
+                </div>
+
+                <div class="panel" style="margin-bottom: 20px;">
+                    <h2>HAFTALIK STATISTIKA</h2>
+                    <p class="subtitle">Oxirgi 7 kundagi natijalaringiz</p>
+                    <canvas id="weeklyChart" style="max-height: 220px; margin-top: 15px;"></canvas>
                 </div>
 
                 <div class="panel" id="admin-task-panel" style="margin-bottom: 20px;">
@@ -119,7 +148,6 @@
                 </div>
             </section>
 
-            <!-- DO'KON -->
             <section id="view-market" class="view-section">
                 <div class="panel">
                     <h2>DO'KON</h2>
@@ -130,7 +158,6 @@
                 </div>
             </section>
 
-            <!-- TARIX -->
             <section id="view-history" class="view-section">
                 <div class="panel">
                     <h2>AMALLAR TARIXI</h2>
@@ -140,7 +167,6 @@
                         tozalash</button>
                 </div>
             </section>
-
         </main>
     </div>
 
@@ -153,12 +179,36 @@
             </div>
 
             <div class="modal-body">
-                <div class="profile-preview-area">
-                    <div class="avatar-large" id="modal-avatar-preview">U</div>
-                    <div>
-                        <h3 id="modal-profile-name" style="color: var(--text-color);">Foydalanuvchi</h3>
-                        <p id="modal-profile-role" style="color: var(--accent-color); font-size: 13px;">Rol</p>
+                <!-- Profil Preview va Boshqaruv Tugmalari -->
+                <div class="profile-preview-area"
+                    style="display: flex; flex-direction: column; gap: 12px; padding: 15px; background: rgba(0,255,102,0.03); border: 1px solid var(--accent-color); border-radius: 10px; margin-bottom: 20px;">
+                    
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div id="modal-avatar-preview"
+                            style="width: 60px; height: 60px; min-width: 60px; min-height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--accent-color, #00ff66);">
+                            U</div>
+                        <div>
+                            <h3 id="modal-profile-name" style="color: var(--text-color); font-size: 16px;">Foydalanuvchi</h3>
+                            <p id="modal-profile-role" style="color: var(--accent-color); font-size: 12px;">Rol</p>
+                        </div>
                     </div>
+
+                    <!-- Rasm Yuklash va O'chirish Tugmalari (Yonma-yon) -->
+                    <div style="display: flex; gap: 10px; width: 100%;">
+                        <button type="button" class="cyber-btn primary-btn"
+                            style="font-size: 11px; padding: 8px; flex: 1;"
+                            onclick="document.getElementById('modal-avatar-input').click()">
+                            📁 Rasm yuklash
+                        </button>
+                        <button type="button" class="cyber-btn danger-btn"
+                            style="font-size: 11px; padding: 8px; flex: 1;"
+                            onclick="removeProfileAvatar()">
+                            🗑️ O'chirish
+                        </button>
+                    </div>
+
+                    <input type="file" id="modal-avatar-input" accept="image/*" style="display: none;"
+                        onchange="uploadProfileImage(event)">
                 </div>
 
                 <div class="profile-stats-grid">
@@ -183,7 +233,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Yangi parol (agar o'zgartirmoqchi bo'lsangiz):</label>
+                    <label>Yangi parol:</label>
                     <div class="password-wrapper" style="position: relative;">
                         <input type="password" id="new-password-input" placeholder="Yangi parol (min 4 ta)..."
                             style="width:100%; padding-right: 40px;">
@@ -191,7 +241,7 @@
                             style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color);">👁️</span>
                     </div>
                 </div>
-
+                
                 <button onclick="saveAllProfileChanges()" class="cyber-btn primary-btn"
                     style="width: 100%; margin-top: 10px;">PROFILNI YANGILASH</button>
             </div>
@@ -200,7 +250,7 @@
 
     <div id="toast-container"></div>
 
-    <!-- FIREBASE SDK KUTUBXONALARI VA ULANISH -->
+    <!-- FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
         import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
@@ -225,26 +275,8 @@
         window.dbGet = get;
         window.dbChild = child;
     </script>
-    
-    <!-- ASOSIY SCRIPT -->
-    <script src="app.js?v=3.0"></script>
 
-    <!-- ZAMONAVIY TASDIQLASH MODALI -->
-    <div id="cyber-confirm-modal" class="modal-overlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
-        <div class="cyber-modal-content"
-            style="background: #0d1117; border: 2px solid var(--accent-color, #00ff66); padding: 25px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
-            <h3 id="cyber-confirm-title" style="color: #fff; margin-bottom: 15px; font-family: monospace;">DIQQAT</h3>
-            <p id="cyber-confirm-text" style="color: #8b949e; margin-bottom: 25px; font-size: 14px;">Haqiqatan ham bu
-                amalni bajarmoqchimisiz?</p>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="cyber-confirm-yes" class="cyber-btn primary-btn"
-                    style="flex: 1; padding: 10px; background: #00ff66; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;">HA</button>
-                <button id="cyber-confirm-no" class="cyber-btn danger-btn"
-                    style="flex: 1; padding: 10px; background: #ff0055; color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;">YO'Q</button>
-            </div>
-        </div>
-    </div>
+    <script src="app.js?v=4.0"></script>
 </body>
 
 </html>
