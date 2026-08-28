@@ -61,7 +61,7 @@
 
             <!-- MAVZU O'ZGARTIRISH -->
             <div class="theme-switcher">
-                <p class="menu-label">MAVZU (5 XIL)</p>
+                <p class="menu-label">MAVZULAR</p>
                 <div class="theme-btns">
                     <button class="t-btn cyan" onclick="setTheme('theme-cyan')" title="Neon Ko'k"></button>
                     <button class="t-btn green" onclick="setTheme('theme-green')" title="Neon Yashil"></button>
@@ -182,13 +182,14 @@
                 <!-- Profil Preview va Boshqaruv Tugmalari -->
                 <div class="profile-preview-area"
                     style="display: flex; flex-direction: column; gap: 12px; padding: 15px; background: rgba(0,255,102,0.03); border: 1px solid var(--accent-color); border-radius: 10px; margin-bottom: 20px;">
-                    
+
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <div id="modal-avatar-preview"
                             style="width: 60px; height: 60px; min-width: 60px; min-height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--accent-color, #00ff66);">
                             U</div>
                         <div>
-                            <h3 id="modal-profile-name" style="color: var(--text-color); font-size: 16px;">Foydalanuvchi</h3>
+                            <h3 id="modal-profile-name" style="color: var(--text-color); font-size: 16px;">Foydalanuvchi
+                            </h3>
                             <p id="modal-profile-role" style="color: var(--accent-color); font-size: 12px;">Rol</p>
                         </div>
                     </div>
@@ -201,8 +202,7 @@
                             📁 Rasm yuklash
                         </button>
                         <button type="button" class="cyber-btn danger-btn"
-                            style="font-size: 11px; padding: 8px; flex: 1;"
-                            onclick="removeProfileAvatar()">
+                            style="font-size: 11px; padding: 8px; flex: 1;" onclick="removeProfileAvatar()">
                             🗑️ O'chirish
                         </button>
                     </div>
@@ -241,7 +241,7 @@
                             style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color);">👁️</span>
                     </div>
                 </div>
-                
+
                 <button onclick="saveAllProfileChanges()" class="cyber-btn primary-btn"
                     style="width: 100%; margin-top: 10px;">PROFILNI YANGILASH</button>
             </div>
@@ -249,6 +249,24 @@
     </div>
 
     <div id="toast-container"></div>
+    <!-- Cyber Modal Oynasi -->
+    <div id="cyber-confirm-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div
+            style="background: #1a0000; border: 2px solid #ff0055; padding: 25px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);">
+            <h3 id="cyber-confirm-title"
+                style="color: #ff0055; margin-bottom: 15px; font-family: monospace; font-size: 20px;">[ TASDIQLASH ]
+            </h3>
+            <p id="cyber-confirm-text" style="color: #ffffff; margin-bottom: 25px; font-size: 14px; line-height: 1.5;">
+            </p>
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+                <button id="cyber-confirm-yes"
+                    style="flex: 1; background: #00ff66; color: #000; border: none; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; text-transform: uppercase;">Ha</button>
+                <button id="cyber-confirm-no"
+                    style="flex: 1; background: #ff0055; color: #fff; border: none; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; text-transform: uppercase;">Yo'q</button>
+            </div>
+        </div>
+    </div>
 
     <!-- FIREBASE -->
     <script type="module">

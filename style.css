@@ -856,3 +856,13 @@ html, body {
         overflow: visible !important;
     }
 }
+
+
+/* ==========================================
+   TO'LIQ VA YAKUNIY MONO MAVZU CSS KODI
+   ========================================== */
+body.mono {
+    background-color: #f3f4f6 !important;
+    color: #1a1a1a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}

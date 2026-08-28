@@ -8,6 +8,12 @@ let dailyEarned = Number(localStorage.getItem('cyber_daily')) || 0;
 let pendingPurchases = [];
 const DAILY_LIMIT = 50;
 
+let weeklyData = JSON.parse(localStorage.getItem('cyber_weekly_data')) || {
+    days: [0, 0, 0, 0, 0, 0, 0],
+    lastResetDate: new Date().toDateString(),
+    lastDayIndex: -1
+};
+
 let tasks = [
     { name: "Matematika darsini qilish" },
     { name: "Ingliz tili so'zlarini yodlash" }
@@ -48,6 +54,7 @@ let weeklyChartInstance = null;
 // ==========================================
 async function loadDataFromFirebase() {
     if (!window.db || !window.dbGet || !window.dbRef) {
+        checkWeekReset();
         updateUIWithoutSaving();
         if (currentRole) setupRoleUI();
         return;
@@ -68,11 +75,16 @@ async function loadDataFromFirebase() {
             streakCount = data.streak !== undefined ? Number(data.streak) : streakCount;
             lastLoginDate = data.lastLogin || lastLoginDate;
             pendingPurchases = Array.isArray(data.pending) ? data.pending : [];
+            
+            if (data.weeklyData && Array.isArray(data.weeklyData.days) && data.weeklyData.days.length === 7) {
+                weeklyData = data.weeklyData;
+            }
         }
     } catch (error) {
         console.error("Firebase'dan yuklashda xatolik:", error);
     }
 
+    checkWeekReset();
     updateUIWithoutSaving();
     if (currentRole) setupRoleUI();
 }
@@ -81,6 +93,7 @@ function saveDataToFirebase() {
     localStorage.setItem('cyber_coins', totalCoins);
     localStorage.setItem('cyber_daily', dailyEarned);
     localStorage.setItem('cyber_theme', savedTheme);
+    localStorage.setItem('cyber_weekly_data', JSON.stringify(weeklyData));
 
     if (!window.db || !window.dbSet || !window.dbRef) return;
 
@@ -93,13 +106,31 @@ function saveDataToFirebase() {
         theme: savedTheme,
         streak: streakCount,
         lastLogin: lastLoginDate,
-        pending: pendingPurchases
-    }).then(() => {
-        console.log("Firebase'ga muvaffaqiyatli saqlandi!");
+        pending: pendingPurchases,
+        weeklyData: weeklyData
     }).catch(error => {
         console.error("Firebase saqlash xatosi:", error);
-        showToast("Bazaga saqlashda xatolik yuz berdi", "error");
     });
+}
+
+// Haftalik va kunlik resetni tekshirish
+function checkWeekReset() {
+    const now = new Date();
+    const todayStr = now.toDateString();
+    
+    let jsDay = now.getDay(); // 0: Yakshanba, 1: Dushanba, ...
+    let currentDayIndex = jsDay === 0 ? 6 : jsDay - 1; // 0: Dushanba, ..., 6: Yakshanba
+
+    if (weeklyData.lastResetDate !== todayStr) {
+        // Agar yangi kunga o'tilgan bo'lsa, kundalik limitni nollaymiz
+        dailyEarned = 0;
+        
+        // Agar hafta boshidan (Dushanbadan) boshqa kunga o'tish yuzaga kelgan bo'lsa va 
+        // oldingi kundan farq qilsa, saqlaymiz
+        weeklyData.lastResetDate = todayStr;
+        weeklyData.lastDayIndex = currentDayIndex;
+        saveDataToFirebase();
+    }
 }
 
 // ==========================================
@@ -190,7 +221,7 @@ function logout() {
 
 function setupRoleUI() {
     if (!currentRole) return;
-    checkAutoDailyReset();
+    checkWeekReset();
     const adminPanel = document.getElementById('admin-task-panel');
     const welcomeTitle = document.getElementById('welcome-title');
     const clearHistoryBtn = document.getElementById('clear-history-btn');
@@ -234,18 +265,15 @@ function renderProfileAvatar() {
 
     const currentProfile = userProfiles[currentRole];
     
-    // Rasm bo'lsa rasmni, bo'lmasa harfni tayyorlaymiz
     const innerHTML = currentProfile.customAvatar 
         ? `<img src="${currentProfile.customAvatar}">`
         : `<span>${currentProfile.avatar || "👤"}</span>`;
 
-    // Admin va O'quvchi avatarlarini bir xil yangilaymiz
     const avatarIds = ['profile-avatar', 'modal-avatar-preview', 'sidebar-profile-avatar'];
     avatarIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.innerHTML = innerHTML;
-            // Bir xil class biriktiramiz
             el.className = 'profile-avatar-box';
         }
     });
@@ -284,12 +312,12 @@ function uploadProfileImage(event) {
     reader.readAsDataURL(file);
 }
 
-function removeProfileImage() {
+function removeProfileAvatar() {
     if (userProfiles[currentRole]) {
         delete userProfiles[currentRole].customAvatar;
         renderProfileAvatar();
         saveDataToFirebase();
-        showToast("Profil rasmi o'chirildi", "info");
+        showToast("Profil rasmi o'chirildi!", "success");
     }
 }
 
@@ -383,11 +411,17 @@ function updateUIWithoutSaving() {
     const dailyEl = document.getElementById('daily-earned');
     const mktBalanceEl = document.getElementById('market-balance');
     const streakEl = document.getElementById('user-streak');
+    const weeklyTotalEl = document.getElementById('weekly-total-coins');
 
     if (coinsEl) coinsEl.textContent = `${totalCoins} 💰`;
     if (dailyEl) dailyEl.textContent = dailyEarned;
     if (mktBalanceEl) mktBalanceEl.textContent = totalCoins;
     if (streakEl) streakEl.textContent = `🔥 ${streakCount} kun`;
+
+    if (weeklyTotalEl) {
+        const totalWeeklySum = weeklyData.days.reduce((a, b) => a + b, 0);
+        weeklyTotalEl.textContent = totalWeeklySum;
+    }
 
     localStorage.setItem('cyber_coins', totalCoins);
     localStorage.setItem('cyber_daily', dailyEarned);
@@ -465,13 +499,27 @@ function giveCoin(index, taskName) {
         return;
     }
 
+    if (dailyEarned >= DAILY_LIMIT) {
+        showToast("Bugungi 50 talik limit to'lgan! Yangi kunni boshlang.", "error");
+        return;
+    }
+
     if (dailyEarned + amount > DAILY_LIMIT) {
-        showToast(`Limit! Qolgan limit: ${DAILY_LIMIT - dailyEarned}`, "error");
+        showToast(`Limit oshib ketmoqda! Faqat ${DAILY_LIMIT - dailyEarned} ta coin qo'shishingiz mumkin.`, "error");
         return;
     }
 
     totalCoins += amount;
     dailyEarned += amount;
+    
+    // Agar weeklyData da activeDayIndex bo'lmasa, uni yaratib olamiz
+    if (weeklyData.activeDayIndex === undefined) {
+        weeklyData.activeDayIndex = 3; // Hozirgi Payshanba indeksi (0: Dush, 1: Sesh, 2: Chor, 3: Pay)
+    }
+    
+    // Coinlarni aniq o'sha joriy faol kunga qo'shamiz
+    weeklyData.days[weeklyData.activeDayIndex] = (weeklyData.days[weeklyData.activeDayIndex] || 0) + amount;
+
     if (inputField) inputField.value = '';
 
     historyLog.push({
@@ -481,6 +529,7 @@ function giveCoin(index, taskName) {
     });
 
     updateUI();
+    renderWeeklyStats();
     renderHistory();
     showToast(`${amount} coin qo'shildi.`, "success");
     playCoinSound();
@@ -665,16 +714,12 @@ function renderWeeklyStats() {
     const ctx = document.getElementById('weeklyChart');
     if (!ctx || typeof Chart === 'undefined') return;
 
-    // Bugungi kun va sanani aniqlash
     const now = new Date();
-    const dayIndex = (now.getDay() + 6) % 7; // Dush=0, Sesh=1, ..., Yak=6
-    const formattedDate = now.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
 
-    // Haftalik massivni shakllantirish (bugungi kunga dailyEarned ni qo'yish)
-    const weeklyData = [0, 0, 0, 0, 0, 0, 0];
-    weeklyData[dayIndex] = dailyEarned;
-
-    // Sarlavhaga bugungi sanani ko'rsatish (agar subtitle elementi bo'lsa)
     const subTitleEl = document.querySelector('#view-dashboard p');
     if (subTitleEl) {
         subTitleEl.textContent = `Oxirgi 7 kundagi natijalaringiz (Bugun: ${formattedDate})`;
@@ -690,7 +735,7 @@ function renderWeeklyStats() {
             labels: ['Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'],
             datasets: [{
                 label: 'Topilgan Coinlar',
-                data: weeklyData,
+                data: weeklyData.days, 
                 backgroundColor: '#00e5ff',
                 borderRadius: 6
             }]
@@ -700,7 +745,7 @@ function renderWeeklyStats() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: DAILY_LIMIT,
+                    max: DAILY_LIMIT, 
                     ticks: {
                         stepSize: 10,
                         color: '#888'
@@ -737,24 +782,53 @@ if (clearHistoryBtn) {
 const resetDayBtn = document.getElementById('reset-day-btn');
 if (resetDayBtn) {
     resetDayBtn.addEventListener('click', () => {
-        showCyberConfirm("YANGI KUN", "Yangi kunni boshlamoqchimisiz? Bugungi limit noldan boshlanadi.", () => {
-            dailyEarned = 0;
-            updateUI();
-            showToast("Yangi kun boshlandi!", "info");
-        });
+        const modal = document.getElementById('cyber-confirm-modal');
+        const titleEl = document.getElementById('cyber-confirm-title');
+        const textEl = document.getElementById('cyber-confirm-text');
+        const yesBtn = document.getElementById('cyber-confirm-yes');
+        const noBtn = document.getElementById('cyber-confirm-no');
+
+        if (modal && yesBtn && noBtn) {
+            if (titleEl) titleEl.textContent = "[ YANGI KUN ]";
+            if (textEl) textEl.textContent = "Yangi kunni boshlamoqchimisiz? Bugungi limit noldan boshlanadi va keyingi kunga o'tasiz.";
+            modal.style.display = 'flex';
+
+            // Eski listenerlar yigilib qolmasligi uchun ularni yangilaymiz
+            const newYesBtn = yesBtn.cloneNode(true);
+            const newNoBtn = noBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+            noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+
+            newYesBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+                
+                // Yangi kun mantiqi
+                dailyEarned = 0;
+                
+                if (weeklyData.activeDayIndex === undefined) {
+                    weeklyData.activeDayIndex = 0;
+                }
+
+                weeklyData.activeDayIndex++;
+
+                if (weeklyData.activeDayIndex > 6) {
+                    weeklyData.activeDayIndex = 0;
+                    weeklyData.days = [0, 0, 0, 0, 0, 0, 0];
+                    showToast("Yangi hafta boshlandi! Statistika yangilandi.", "success");
+                } else {
+                    showToast("Yangi kun boshlandi!", "success");
+                }
+
+                saveDataToFirebase();
+                updateUI();
+                renderWeeklyStats();
+            });
+
+            newNoBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
     });
-}
-
-function checkAutoDailyReset() {
-    const today = new Date().toISOString().slice(0, 10);
-    const lastReset = localStorage.getItem('cyber_last_reset') || '';
-
-    if (lastReset !== today) {
-        dailyEarned = 0;
-        localStorage.setItem('cyber_daily', 0);
-        localStorage.setItem('cyber_last_reset', today);
-        saveDataToFirebase();
-    }
 }
 
 function setTheme(themeName) {
@@ -867,31 +941,3 @@ window.addEventListener('load', async () => {
     checkAuth();
 });
 
-// Profil rasmini o'chirish funksiyasi
-function removeProfileAvatar() {
-    // 1. Agar foydalanuvchi ma'lumotlari mavjud bo'lsa, avatarUrl ni olib tashlaymiz
-    if (typeof currentUser !== 'undefined' && currentUser) {
-        currentUser.avatarUrl = null;
-        
-        // Agar localStorage ishlatilsa
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
-        // Agar Firebase bazasiga saqlanadigan bo'lsa (foydalanuvchi ma'lumotlarini yangilash)
-        if (typeof db !== 'undefined' && currentUser.uid) {
-            dbSet(dbRef(db, 'users/' + currentUser.uid + '/avatarUrl'), null);
-        }
-    }
-
-    // 2. Interfeysdagi avatarlarni yangilash (bosh harf yoki emojiga qaytarish)
-    if (typeof updateAllAvatars === 'function') {
-        updateAllAvatars();
-    } else {
-        // Agar maxsus funksiya bo'lmasa, sahifani yangilab yuborish ham mumkin
-        location.reload();
-    }
-
-    // 3. Xabar berish
-    if (typeof showToast === 'function') {
-        showToast("Profil rasmi o'chirildi!", "success");
-    }
-}
